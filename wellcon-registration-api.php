@@ -32,6 +32,17 @@ function wellcon_api_log( string $message, $data = null ): void {
 }
 
 // API keys: name => sha256 hash (the plain key is shown once, at creation).
+// Username from email; appends a number if taken (two emails can strip to the same login).
+function wellcon_api_unique_login( string $email ): string {
+	$base  = sanitize_user( str_replace( "@", "", $email ), true );
+	$login = $base;
+	$i     = 1;
+	while ( username_exists( $login ) ) {
+		$login = $base . $i++;
+	}
+	return $login;
+}
+
 function wellcon_api_keys(): array {
 	return (array) get_option( 'wellcon_api_keys', [] );
 }
@@ -126,7 +137,7 @@ function wellcon_api_create_registration( WP_REST_Request $request ) {
 		}
 		if ( ! $user ) {
 			$userId = wp_insert_user( [
-				'user_login' => sanitize_user( str_replace( '@', '', $email ), true ),
+				'user_login' => wellcon_api_unique_login( $email ),
 				'user_email' => $email,
 				'first_name' => $first,
 				'last_name'  => $last,
